@@ -1,0 +1,113 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "multi-container-app.fullname" . }}-frontend-files
+  labels:
+    {{- include "multi-container-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Multi-Container App</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 20px;
+                background-color: #f5f5f5;
+            }
+            .container {
+                background: white;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            h1 {
+                color: #333;
+            }
+            button {
+                background-color: #4CAF50;
+                color: white;
+                padding: 10px 15px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                margin: 10px 5px 10px 0;
+            }
+            button:hover {
+                background-color: #45a049;
+            }
+            #response {
+                margin-top: 20px;
+                padding: 15px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                min-height: 20px;
+                background-color: #f9f9f9;
+                white-space: pre-wrap;
+            }
+            .loading {
+                color: #666;
+                font-style: italic;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Welcome to Multi-Container App</h1>
+            <p>This is a simple frontend that communicates with the backend service.</p>
+            
+            <div>
+                <button id="callBackend">Call Backend API</button>
+                <button id="callRedis">Test Redis Connection</button>
+            </div>
+            
+            <div>
+                <h3>API Response:</h3>
+                <pre id="response">Click a button to see the response here</pre>
+            </div>
+        </div>
+
+        <script>
+            function showLoading() {
+                const response = document.getElementById('response');
+                response.innerHTML = '<span class="loading">Loading...</span>';
+                return response;
+            }
+
+            function showError(error) {
+                const response = document.getElementById('response');
+                response.innerHTML = `<span style="color: red">Error: ${error.message || 'Unknown error occurred'}</span>`;
+            }
+
+            document.getElementById('callBackend').addEventListener('click', async () => {
+                const response = showLoading();
+                try {
+                    const result = await fetch('/api/hello');
+                    if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);
+                    const data = await result.text();
+                    response.textContent = `Backend says: ${data}`;
+                } catch (error) {
+                    showError(error);
+                }
+            });
+
+            document.getElementById('callRedis').addEventListener('click', async () => {
+                const response = showLoading();
+                try {
+                    const result = await fetch('/api/redis');
+                    if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);
+                    const data = await result.json();
+                    response.textContent = `Redis status: ${data.status}\n${data.message}`;
+                } catch (error) {
+                    showError(error);
+                }
+            });
+        </script>
+    </body>
+    </html>
